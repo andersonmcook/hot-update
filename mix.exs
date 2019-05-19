@@ -1,6 +1,8 @@
 defmodule Umbrella.MixProject do
   use Mix.Project
 
+  @deploy_path "../local_deploy"
+
   def project do
     [
       apps_path: "apps",
@@ -21,14 +23,30 @@ defmodule Umbrella.MixProject do
 
   defp aliases do
     [
-      release_a: release("a", "0.1.0", "../local_deploy"),
-      release_b: release("b", "0.1.0", "../local_deploy")
+      release_a: release("a", "0.1.0"),
+      release_b: release("b", "0.1.0"),
+      upgrade_a: upgrade("a", "0.2.0"),
+      upgrade_b: upgrade("b", "0.2.0")
     ]
   end
 
-  defp release(app, vsn, path) do
+  # this causes everything to hang
+  # defp version(app) do
+  #   app
+  #   |> String.to_atom()
+  #   |> Mix.Project.in_project(
+  #     project()
+  #     |> Keyword.get(:apps_path)
+  #     |> Path.join(app),
+  #     &Keyword.get(&1.project(), :version)
+  #   )
+  #   |> IO.inspect()
+  # end
+
+  defp release(app, vsn) do
     [
       fn _ -> Mix.env(:prod) end,
+      "deps.get --only prod",
       "compile",
       "cmd --app #{app} mix prepare",
       fn _ ->
@@ -42,7 +60,7 @@ defmodule Umbrella.MixProject do
       fn _ ->
         System.cmd(
           "cp",
-          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", path],
+          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", @deploy_path],
           into: IO.stream(:stdio, :line)
         )
       end,
@@ -50,15 +68,57 @@ defmodule Umbrella.MixProject do
         System.cmd(
           "tar",
           ["xvf", "#{app}.tar.gz"],
-          cd: path,
+          cd: @deploy_path,
           into: IO.stream(:stdio, :line)
         )
       end,
       fn _ ->
         System.cmd(
           "sh",
-          ["#{path}/bin/#{app}", "console"],
+          ["#{@deploy_path}/bin/#{app}", "console"],
           env: [{"PORT", "4000"}],
+          into: IO.stream(:stdio, :line)
+        )
+      end
+    ]
+  end
+
+  defp upgrade(app, vsn) do
+    [
+      fn _ -> Mix.env(:prod) end,
+      "deps.get --only prod",
+      "compile",
+      "cmd --app #{app} mix prepare",
+      fn _ ->
+        System.cmd(
+          "mix",
+          ["release", "--name", app, "--env", "prod", "--upgrade"],
+          env: [{"MIX_ENV", "prod"}],
+          into: IO.stream(:stdio, :line)
+        )
+      end,
+      fn _ ->
+        System.cmd(
+          "mkdir",
+          ["-p", "releases/#{app}/#{vsn}"],
+          cd: @deploy_path,
+          into: IO.stream(:stdio, :line)
+        )
+      end,
+      fn _ ->
+        System.cmd(
+          "cp",
+          [
+            "_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz",
+            "#{@deploy_path}/releases/#{app}/#{vsn}/"
+          ],
+          into: IO.stream(:stdio, :line)
+        )
+      end,
+      fn _ ->
+        System.cmd(
+          "sh",
+          ["#{@deploy_path}/bin/#{app}", "upgrade", vsn],
           into: IO.stream(:stdio, :line)
         )
       end
