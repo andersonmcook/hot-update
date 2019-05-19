@@ -50,6 +50,9 @@ defmodule A.MixProject do
   defp aliases() do
     [
       prepare: [
+        fn _ -> Mix.env(:prod) end,
+        "deps.get --only prod",
+        "compile",
         fn _ ->
           System.cmd("npm", ["run", "deploy", "--prefix", "assets"],
             into: IO.stream(:stdio, :line)

@@ -23,21 +23,33 @@ defmodule Umbrella.MixProject do
     [
       release_a: [
         fn _ -> Mix.env(:prod) end,
-        "deps.get --only prod",
-        "compile",
         "cmd --app a mix prepare",
         fn _ ->
           System.cmd(
             "mix",
             ["release", "--name", "a", "--env", "prod"],
-            env: [{"MIX_ENV", "prod"}],
+            into: IO.stream(:stdio, :line)
+          )
+        end,
+        fn _ ->
+          System.cmd(
+            "cp",
+            ["_build/prod/rel/a/releases/0.1.0/a.tar.gz", "../local_deploy"],
+            into: IO.stream(:stdio, :line)
+          )
+        end,
+        fn _ ->
+          System.cmd(
+            "tar",
+            ["xvf", "a.tar.gz"],
+            cd: "../local_deploy",
             into: IO.stream(:stdio, :line)
           )
         end,
         fn _ ->
           System.cmd(
             "sh",
-            ["_build/prod/rel/a/bin/a", "foreground"],
+            ["../local_deploy/bin/a", "console"],
             env: [{"PORT", "4000"}],
             into: IO.stream(:stdio, :line)
           )
