@@ -21,40 +21,47 @@ defmodule Umbrella.MixProject do
 
   defp aliases do
     [
-      release_a: [
-        fn _ -> Mix.env(:prod) end,
-        "cmd --app a mix prepare",
-        fn _ ->
-          System.cmd(
-            "mix",
-            ["release", "--name", "a", "--env", "prod"],
-            into: IO.stream(:stdio, :line)
-          )
-        end,
-        fn _ ->
-          System.cmd(
-            "cp",
-            ["_build/prod/rel/a/releases/0.1.0/a.tar.gz", "../local_deploy"],
-            into: IO.stream(:stdio, :line)
-          )
-        end,
-        fn _ ->
-          System.cmd(
-            "tar",
-            ["xvf", "a.tar.gz"],
-            cd: "../local_deploy",
-            into: IO.stream(:stdio, :line)
-          )
-        end,
-        fn _ ->
-          System.cmd(
-            "sh",
-            ["../local_deploy/bin/a", "console"],
-            env: [{"PORT", "4000"}],
-            into: IO.stream(:stdio, :line)
-          )
-        end
-      ]
+      release_a: release("a", "0.1.0", "../local_deploy"),
+      release_b: release("b", "0.1.0", "../local_deploy")
+    ]
+  end
+
+  defp release(app, vsn, path) do
+    [
+      fn _ -> Mix.env(:prod) end,
+      "compile",
+      "cmd --app #{app} mix prepare",
+      fn _ ->
+        System.cmd(
+          "mix",
+          ["release", "--name", app, "--env", "prod"],
+          env: [{"MIX_ENV", "prod"}],
+          into: IO.stream(:stdio, :line)
+        )
+      end,
+      fn _ ->
+        System.cmd(
+          "cp",
+          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", path],
+          into: IO.stream(:stdio, :line)
+        )
+      end,
+      fn _ ->
+        System.cmd(
+          "tar",
+          ["xvf", "#{app}.tar.gz"],
+          cd: path,
+          into: IO.stream(:stdio, :line)
+        )
+      end,
+      fn _ ->
+        System.cmd(
+          "sh",
+          ["#{path}/bin/#{app}", "console"],
+          env: [{"PORT", "4000"}],
+          into: IO.stream(:stdio, :line)
+        )
+      end
     ]
   end
 end
