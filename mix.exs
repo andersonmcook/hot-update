@@ -1,8 +1,6 @@
 defmodule Umbrella.MixProject do
   use Mix.Project
 
-  @deploy_path "../local_deploy"
-
   def project do
     [
       apps_path: "apps",
@@ -48,7 +46,7 @@ defmodule Umbrella.MixProject do
       fn _ ->
         System.cmd(
           "cp",
-          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", path],
+          [Path.join(["_build", "prod", "rel", app, "releases", vsn, "#{app}.tar.gz"]), path],
           into: IO.stream(:stdio, :line)
         )
       end,
@@ -63,7 +61,7 @@ defmodule Umbrella.MixProject do
       fn _ ->
         System.cmd(
           "sh",
-          ["#{path}/bin/#{app}", "console"],
+          [Path.join([path, "bin", app]), "console"],
           env: [{"PORT", "4000"}],
           into: IO.stream(:stdio, :line)
         )
@@ -82,7 +80,7 @@ defmodule Umbrella.MixProject do
       fn _ ->
         System.cmd(
           "mkdir",
-          ["-p", "releases/#{vsn}"],
+          ["-p", Path.join(["releases", vsn])],
           cd: path,
           into: IO.stream(:stdio, :line)
         )
@@ -90,19 +88,22 @@ defmodule Umbrella.MixProject do
       fn _ ->
         System.cmd(
           "cp",
-          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", "#{path}/releases/#{vsn}"],
+          [
+            Path.join(["_build", "prod", "rel", app, "releases", vsn, "#{app}.tar.gz"]),
+            Path.join([path, "releases", vsn])
+          ],
           into: IO.stream(:stdio, :line)
         )
       end,
       fn _ ->
         System.cmd(
           "sh",
-          ["#{path}/bin/#{app}", "upgrade", vsn],
+          [Path.join([path, "bin", app]), "upgrade", vsn],
           into: IO.stream(:stdio, :line)
         )
       end
     ]
   end
 
-  defp deploy_path(app), do: @deploy_path <> "/" <> app
+  defp deploy_path(app), do: Path.join(["..", "local_deploy", app])
 end

@@ -16,7 +16,6 @@ defmodule AWeb.HeartbeatChannel do
     result =
       {:global, B.CodeChangeServer}
       |> GenServer.whereis()
-      |> IO.inspect(label: "whereis")
       |> case do
         nil ->
           ""
