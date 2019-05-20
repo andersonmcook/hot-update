@@ -36,7 +36,6 @@ defmodule B.MixProject do
   defp aliases do
     [
       prepare: [
-        fn _ -> Mix.env(:prod) end,
         "deps.get --only prod",
         "compile"
       ]

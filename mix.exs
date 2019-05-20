@@ -30,38 +30,35 @@ defmodule Umbrella.MixProject do
     ]
   end
 
-  # this causes everything to hang
-  # defp version(app) do
-  #   app
-  #   |> String.to_atom()
-  #   |> Mix.Project.in_project(
-  #     project()
-  #     |> Keyword.get(:apps_path)
-  #     |> Path.join(app),
-  #     &Keyword.get(&1.project(), :version)
-  #   )
-  #   |> IO.inspect()
-  # end
-
   defp release(app, vsn) do
+    path = deploy_path(app)
+
     [
       "deps.get --only prod",
       "compile",
       "cmd --app #{app} mix prepare",
       "release --name #{app} --env prod",
-      "cmd cp _build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz #{@deploy_path}",
+      fn _ ->
+        System.cmd("mkdir", ["-p", @deploy_path], into: IO.stream(:stdio, :line))
+        System.cmd("mkdir", ["-p", app], cd: @deploy_path, into: IO.stream(:stdio, :line))
+      end,
+      fn _ ->
+        System.cmd("cp", ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", path],
+          into: IO.stream(:stdio, :line)
+        )
+      end,
       fn _ ->
         System.cmd(
           "tar",
           ["xvf", "#{app}.tar.gz"],
-          cd: @deploy_path,
+          cd: path,
           into: IO.stream(:stdio, :line)
         )
       end,
       fn _ ->
         System.cmd(
           "sh",
-          ["#{@deploy_path}/bin/#{app}", "console"],
+          ["#{path}/bin/#{app}", "console"],
           env: [{"PORT", "4000"}],
           into: IO.stream(:stdio, :line)
         )
@@ -70,44 +67,32 @@ defmodule Umbrella.MixProject do
   end
 
   defp upgrade(app, vsn) do
+    path = deploy_path(app)
+
     [
-      fn _ -> Mix.env(:prod) end,
       "deps.get --only prod",
       "compile",
       "cmd --app #{app} mix prepare",
+      "release --name #{app} --env prod --upgrade",
       fn _ ->
-        System.cmd(
-          "mix",
-          ["release", "--name", app, "--env", "prod", "--upgrade"],
-          env: [{"MIX_ENV", "prod"}],
-          into: IO.stream(:stdio, :line)
-        )
-      end,
-      fn _ ->
-        System.cmd(
-          "mkdir",
-          ["-p", "releases/#{app}/#{vsn}"],
-          cd: @deploy_path,
-          into: IO.stream(:stdio, :line)
-        )
+        System.cmd("mkdir", ["-p", "releases/#{vsn}"], cd: path, into: IO.stream(:stdio, :line))
       end,
       fn _ ->
         System.cmd(
           "cp",
-          [
-            "_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz",
-            "#{@deploy_path}/releases/#{app}/#{vsn}/"
-          ],
+          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", "#{path}/releases/#{vsn}"],
           into: IO.stream(:stdio, :line)
         )
       end,
       fn _ ->
         System.cmd(
           "sh",
-          ["#{@deploy_path}/bin/#{app}", "upgrade", vsn],
+          ["#{path}/bin/#{app}", "upgrade", vsn],
           into: IO.stream(:stdio, :line)
         )
       end
     ]
   end
+
+  defp deploy_path(app), do: @deploy_path <> "/" <> app
 end
