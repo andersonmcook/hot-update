@@ -45,25 +45,11 @@ defmodule Umbrella.MixProject do
 
   defp release(app, vsn) do
     [
-      fn _ -> Mix.env(:prod) end,
       "deps.get --only prod",
       "compile",
       "cmd --app #{app} mix prepare",
-      fn _ ->
-        System.cmd(
-          "mix",
-          ["release", "--name", app, "--env", "prod"],
-          env: [{"MIX_ENV", "prod"}],
-          into: IO.stream(:stdio, :line)
-        )
-      end,
-      fn _ ->
-        System.cmd(
-          "cp",
-          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", @deploy_path],
-          into: IO.stream(:stdio, :line)
-        )
-      end,
+      "release --name #{app} --env prod",
+      "cmd cp _build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz #{@deploy_path}",
       fn _ ->
         System.cmd(
           "tar",
