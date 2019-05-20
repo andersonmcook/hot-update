@@ -6,16 +6,16 @@ defmodule A.Application do
   use Application
 
   def start(_type, _args) do
-    # List all child processes to be supervised
+    # Connect to :b
+    :a
+    |> Application.get_env(:nodes)
+    |> Keyword.get(:b)
+    |> Node.connect()
+
     children = [
-      # Start the endpoint when the application starts
       AWeb.Endpoint
-      # Starts a worker by calling: A.Worker.start_link(arg)
-      # {A.Worker, arg},
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: A.Supervisor]
     Supervisor.start_link(children, opts)
   end

@@ -39,11 +39,16 @@ defmodule Umbrella.MixProject do
       "cmd --app #{app} mix prepare",
       "release --name #{app} --env prod",
       fn _ ->
-        System.cmd("mkdir", ["-p", @deploy_path], into: IO.stream(:stdio, :line))
-        System.cmd("mkdir", ["-p", app], cd: @deploy_path, into: IO.stream(:stdio, :line))
+        System.cmd(
+          "mkdir",
+          ["-p", path],
+          into: IO.stream(:stdio, :line)
+        )
       end,
       fn _ ->
-        System.cmd("cp", ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", path],
+        System.cmd(
+          "cp",
+          ["_build/prod/rel/#{app}/releases/#{vsn}/#{app}.tar.gz", path],
           into: IO.stream(:stdio, :line)
         )
       end,
@@ -75,7 +80,12 @@ defmodule Umbrella.MixProject do
       "cmd --app #{app} mix prepare",
       "release --name #{app} --env prod --upgrade",
       fn _ ->
-        System.cmd("mkdir", ["-p", "releases/#{vsn}"], cd: path, into: IO.stream(:stdio, :line))
+        System.cmd(
+          "mkdir",
+          ["-p", "releases/#{vsn}"],
+          cd: path,
+          into: IO.stream(:stdio, :line)
+        )
       end,
       fn _ ->
         System.cmd(

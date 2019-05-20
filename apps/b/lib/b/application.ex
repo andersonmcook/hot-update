@@ -6,14 +6,16 @@ defmodule B.Application do
   use Application
 
   def start(_type, _args) do
-    # List all child processes to be supervised
+    # Connect to :a
+    :b
+    |> Application.get_env(:nodes)
+    |> Keyword.get(:a)
+    |> Node.connect()
+
     children = [
-      # Starts a worker by calling: B.Worker.start_link(arg)
-      # {B.Worker, arg}
+      B.CodeChangeServer
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: B.Supervisor]
     Supervisor.start_link(children, opts)
   end

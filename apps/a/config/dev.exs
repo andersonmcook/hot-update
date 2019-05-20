@@ -21,6 +21,8 @@ config :a, AWeb.Endpoint,
     ]
   ]
 
+config :a, :nodes, b: :"b@acook-macbook-pro"
+
 # ## SSL Support
 #
 # In order to use HTTPS in development, a self-signed

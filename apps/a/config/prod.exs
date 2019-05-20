@@ -21,6 +21,8 @@ config :a, AWeb.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :a, :nodes, b: :"b@127.0.0.1"
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key
