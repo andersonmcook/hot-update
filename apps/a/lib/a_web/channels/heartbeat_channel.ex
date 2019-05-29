@@ -1,12 +1,14 @@
 defmodule AWeb.HeartbeatChannel do
   use Phoenix.Channel
 
+  require Integer
+
   def join("heartbeat:listen", _, socket) do
     send(self(), {:beat, 0})
     {:ok, socket}
   end
 
-  def handle_info({:beat, n}, socket) when rem(n, 2) == 0 do
+  def handle_info({:beat, n}, socket) when Integer.is_even(n) do
     broadcast!(socket, "ping", %{ping: n})
     Process.send_after(self(), {:beat, n + 1}, 2000)
     {:noreply, socket}
